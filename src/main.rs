@@ -1,5 +1,6 @@
-trait FizzBuzzElement {
-    fn produce_fizzbuzz_word<'w>(i: usize) -> Option<&'w str>;
+use std::borrow::Borrow;
+trait FizzBuzzElement<O: Borrow<str>> {
+    fn produce_fizzbuzz_word(i: usize) -> Option<O>;
 }
 
 macro_rules! generate_fizzbuzz {
@@ -58,8 +59,8 @@ macro_rules! generate_fizzbuzz {
 }
 
 struct Fizz {}
-impl FizzBuzzElement for Fizz {
-    fn produce_fizzbuzz_word<'w>(i: usize) -> Option<&'w str> {
+impl FizzBuzzElement<&'static str> for Fizz {
+    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
         if i % 3 == 0 {
             Some("Fizz")
         } else {
@@ -69,8 +70,8 @@ impl FizzBuzzElement for Fizz {
 }
 
 struct Buzz {}
-impl FizzBuzzElement for Buzz {
-    fn produce_fizzbuzz_word<'w>(i: usize) -> Option<&'w str> {
+impl FizzBuzzElement<&'static str> for Buzz {
+    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
         if i % 5 == 0 {
             Some("Buzz")
         } else {
@@ -79,7 +80,18 @@ impl FizzBuzzElement for Buzz {
     }
 }
 
-generate_fizzbuzz!(Fizz; Buzz);
+struct Baz {}
+impl FizzBuzzElement<&'static str> for Baz {
+    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
+        if i % 7 == 0 {
+            Some("Baz")
+        } else {
+            None
+        }
+    }
+}
+
+generate_fizzbuzz!(Fizz; Buzz; Baz);
 
 fn main() {
     for elm in FizzBuzz::default() {
