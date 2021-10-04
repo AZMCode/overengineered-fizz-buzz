@@ -4,7 +4,7 @@ trait FizzBuzzElement<O: Borrow<str>> {
 }
 
 macro_rules! generate_fizzbuzz {
-    ({$($elm: ident: FizzBuzzElement<$($o: ty),*>),*} as $name: ident ) => {
+    ({$($elm: ident: FizzBuzzElement$(<$($o: ty),+>)?),*} as $name: ident ) => {
         struct $name {
             index: usize
         }
@@ -28,7 +28,7 @@ macro_rules! generate_fizzbuzz {
                 let mut element_products:Vec<Option<&str>> = vec![];
                 $(
                     element_products.push($elm::produce_fizzbuzz_word(n));
-                    impl $elm where $elm: FizzBuzzElement<$($o),*> {}
+                    impl $elm where $elm: FizzBuzzElement$(<$($o),*>)? {}
                 )*
                 let result = element_products.iter().fold(None as Option<String>, |old, elm_prod| 
                     match elm_prod {
