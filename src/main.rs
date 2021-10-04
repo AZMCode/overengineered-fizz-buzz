@@ -4,7 +4,7 @@ trait FizzBuzzElement<O: Borrow<str>> {
 }
 
 macro_rules! generate_fizzbuzz {
-    ($($elm: ident);*) => {
+    ($([$elm: ident, $o: ty]),*) => {
         struct FizzBuzz {
             index: usize
         }
@@ -26,7 +26,10 @@ macro_rules! generate_fizzbuzz {
             type Item = String;
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
                 let mut element_products:Vec<Option<&str>> = vec![];
-                $(element_products.push($elm::produce_fizzbuzz_word(n)));*;
+                $(
+                    element_products.push($elm::produce_fizzbuzz_word(n));
+                    impl $elm where $elm: FizzBuzzElement<$o> {} // Check if $elm implements FizzBuzzElement<$o>
+                )*
                 let result = element_products.iter().fold(None as Option<String>, |old, elm_prod| 
                     match elm_prod {
                         Some(elm_val) => match old {
@@ -80,18 +83,7 @@ impl FizzBuzzElement<&'static str> for Buzz {
     }
 }
 
-struct Baz {}
-impl FizzBuzzElement<&'static str> for Baz {
-    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
-        if i % 7 == 0 {
-            Some("Baz")
-        } else {
-            None
-        }
-    }
-}
-
-generate_fizzbuzz!(Fizz; Buzz; Baz);
+generate_fizzbuzz!([Fizz, &'static str], [Buzz, &'static str], [Baz, &'static str]);
 
 fn main() {
     for elm in FizzBuzz::default() {
