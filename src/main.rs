@@ -4,25 +4,25 @@ trait FizzBuzzElement<O: Borrow<str>> {
 }
 
 macro_rules! generate_fizzbuzz {
-    ($($elm: ident: FizzBuzzElement<$($o: ty),*>),* ) => {
-        struct FizzBuzz {
+    ($($elm: ident: FizzBuzzElement<$($o: ty),*>),* as $name: ident ) => {
+        struct $name {
             index: usize
         }
-        impl FizzBuzz {
+        impl $name {
             fn new(start_index: usize) -> Self {
-                FizzBuzz {
+                $name {
                     index: start_index
                 }
             }
         }
-        impl Default for FizzBuzz {
+        impl Default for $name {
             fn default() -> Self {
-                FizzBuzz {
+                $name {
                     index: 0
                 }
             }
         }
-        impl Iterator for FizzBuzz {
+        impl Iterator for $name {
             type Item = String;
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
                 let mut element_products:Vec<Option<&str>> = vec![];
@@ -50,7 +50,7 @@ macro_rules! generate_fizzbuzz {
                 output
             }
         }
-        impl DoubleEndedIterator for FizzBuzz {
+        impl DoubleEndedIterator for $name {
             fn next_back(&mut self) -> Option<Self::Item> {
                 let output = self.nth(self.index);
                 self.index -= 1;
@@ -86,6 +86,7 @@ impl FizzBuzzElement<&'static str> for Buzz {
 generate_fizzbuzz!(
     Fizz: FizzBuzzElement<&'static str>,
     Buzz: FizzBuzzElement<&'static str>
+        as FizzBuzz
 );
 
 fn main() {
