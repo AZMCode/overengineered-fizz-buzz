@@ -4,7 +4,7 @@ trait FizzBuzzElement<O: Borrow<str>> {
 }
 
 macro_rules! generate_fizzbuzz {
-    ($($elm: ident: FizzBuzzElement<$($o: ty),*>),* as $name: ident ) => {
+    ({$($elm: ident: FizzBuzzElement<$($o: ty),*>),*} as $name: ident ) => {
         struct $name {
             index: usize
         }
@@ -84,9 +84,11 @@ impl FizzBuzzElement<&'static str> for Buzz {
 }
 
 generate_fizzbuzz!(
-    Fizz: FizzBuzzElement<&'static str>,
-    Buzz: FizzBuzzElement<&'static str>
-        as FizzBuzz
+    {
+        Fizz: FizzBuzzElement<&'static str>,
+        Buzz: FizzBuzzElement<&'static str>
+    } 
+    as FizzBuzz
 );
 
 fn main() {
