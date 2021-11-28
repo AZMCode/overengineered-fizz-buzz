@@ -1,35 +1,45 @@
-use std::borrow::Borrow;
-trait FizzBuzzElement<O: Borrow<str>> {
-    fn produce_fizzbuzz_word(i: usize) -> Option<O>;
+#![feature(trivial_bounds)]
+
+use std::borrow::Cow;
+trait FizzBuzzElement {
+    type NewArg;
+    fn new(arg: <Self as FizzBuzzElement>::NewArg) -> Self;
+    fn produce_fizzbuzz_word(&mut self, i: usize) -> Option<Cow<str>>;
 }
 
 macro_rules! generate_fizzbuzz {
-    ({$($elm: ident: FizzBuzzElement$(<$($o: ty),+>)?),*} as $name: ident ) => {
+    (struct $name: ident {$($index: ident: $elm: ty where NewArg = $arg: ty),*} ) => {
         struct $name {
-            index: usize
+            index: usize,
+            gens: ($($elm),*)
         }
         impl $name {
-            fn new(start_index: usize) -> Self {
+            #[allow(dead_code)]
+            fn new(start_index: usize, args: ($($arg),*)) -> Self {
                 $name {
-                    index: start_index
+                    index: start_index,
+                    gens: {
+                        let ($($index),*) = args;
+                        ($(<$elm as FizzBuzzElement>::new($index)),*)
+                    }
                 }
             }
         }
-        impl Default for $name {
-            fn default() -> Self {
-                $name {
-                    index: 0
-                }
+        #[allow(trivial_bounds)]
+        impl $name where $($arg: Default),* {
+            #[allow(dead_code)]
+            fn new_default_args(start_index: usize) -> Self {
+                Self::new(start_index, ($(<$arg as Default>::default()),*))
             }
         }
         impl Iterator for $name {
             type Item = String;
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                let mut element_products:Vec<Option<&str>> = vec![];
-                $(
-                    element_products.push($elm::produce_fizzbuzz_word(n));
-                    impl $elm where $elm: FizzBuzzElement$(<$($o),*>)? {}
-                )*
+                let mut element_products:Vec<Option<Cow<str>>> = vec![];
+                {
+                    let ($(ref mut $index),*) = self.gens;
+                    $(element_products.push(<$elm as FizzBuzzElement>::produce_fizzbuzz_word($index,n)));*
+                }
                 let result = element_products.iter().fold(None as Option<String>, |old, elm_prod| 
                     match elm_prod {
                         Some(elm_val) => match old {
@@ -62,10 +72,14 @@ macro_rules! generate_fizzbuzz {
 }
 
 struct Fizz {}
-impl FizzBuzzElement<&'static str> for Fizz {
-    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
+impl FizzBuzzElement for Fizz {
+    type NewArg = ();
+    fn new(_: ()) -> Self {
+        Fizz{}
+    }
+    fn produce_fizzbuzz_word(&mut self, i: usize) -> Option<Cow<str>> {
         if i % 3 == 0 {
-            Some("Fizz")
+            Some(Cow::Borrowed("Fizz"))
         } else {
             None
         }
@@ -73,26 +87,29 @@ impl FizzBuzzElement<&'static str> for Fizz {
 }
 
 struct Buzz {}
-impl FizzBuzzElement<&'static str> for Buzz {
-    fn produce_fizzbuzz_word(i: usize) -> Option<&'static str> {
+impl FizzBuzzElement for Buzz {
+    type NewArg = ();
+    fn new(_: ()) -> Self {
+        Buzz {}
+    }
+    fn produce_fizzbuzz_word(&mut self, i: usize) -> Option<Cow<str>> {
         if i % 5 == 0 {
-            Some("Buzz")
+            Some(Cow::Borrowed("Buzz"))
         } else {
             None
         }
     }
 }
 
-generate_fizzbuzz!(
-    {
-        Fizz: FizzBuzzElement<&'static str>,
-        Buzz: FizzBuzzElement<&'static str>
-    } 
-    as FizzBuzz
-);
+generate_fizzbuzz!{
+    struct FizzBuzz {
+        fizz: Fizz where NewArg = (),
+        buzz: Buzz where NewArg = ()
+    }
+}
 
 fn main() {
-    for elm in FizzBuzz::default() {
+    for elm in FizzBuzz::new_default_args(0) {
         println!("{}",elm);
     }
 }
