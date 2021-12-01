@@ -7,6 +7,20 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug FizzBuzz",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=fizz_buzz",
+                ]
+            },
+            "program": "${cargo:program}",
+            "args": []
+        },
+
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug executable 'fizz-buzz'",
             "cargo": {
                 "args": [
